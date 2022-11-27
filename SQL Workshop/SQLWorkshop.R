@@ -1,7 +1,8 @@
 #Need to collect player data, teams, salary data, batting data, fielding and pitching data
+library("RSQLite")
 library("sqldf")
 library("Lahman")
-
+library("factoextra")
 
 viewing = LahmanData
 
@@ -130,6 +131,68 @@ AngelsStaff = sqldf("SELECT *
                         ON bat.playerID = field.playerID
                      
                      ")
+
+battersnewagent <- subset(FreeAgentStats, is.na(W))
+pitchersnewagent <- subset(FreeAgentStats, !is.na(W))
+
+#newagent_batters
+battersnewagent_person<- data.frame(battersnewagent$playerID,battersnewagent$POS)
+battersnewagent_person_POS <- apply(battersnewagent_person,1,paste,collapse="-")
+battersnewagent_data <- battersnewagent[2:17]
+
+#scaled
+battersnewagent_scaled <- scale(battersnewagent_data)
+battersnewagent_scaled
+battersnewagent_data_dist <- dist(battersnewagent_data)
+battersnewagent_data_dist
+
+#calculate the number of clusters
+#within sum squares
+fviz_nbclust(battersnewagent_scaled, kmeans, method="wss") + labs(subtitle = "Elbow Method")
+#k = 5
+
+kmeans.out <- kmeans(battersnewagent_scaled, centers = 5, nstart = 1000)
+print(kmeans.out)
+
+#visualize the clustering algorithm
+kmeans.clusters <- kmeans.out$cluster
+rownames(battersnewagent_scaled) <- paste(battersnewagent_person_POS, 1:dim(battersnewagent)[1], sep = "_")
+fviz_cluster(list(data=battersnewagent_scaled, cluster=kmeans.clusters))
+
+
+#newagent_pitchers
+pitchersnewagent_person<- data.frame(pitchersnewagent$playerID,pitchersnewagent$POS)
+pitchersnewagent_person_POS <- apply(pitchersnewagent_person,1,paste,collapse="-")
+pitchersnewagent_data <- pitchersnewagent[18:43]
+pitchersnewagent_data
+
+#scaled
+pitchersnewagent_scaled <- scale(pitchersnewagent_data)
+pitchersnewagent_scaled
+pitchersnewagent_data_dist <- dist(pitchersnewagent_data)
+pitchersnewagent_data_dist
+
+#calculate the number of clusters
+#within sum squares
+fviz_nbclust(pitchersnewagent_scaled, kmeans, method="wss") + labs(subtitle = "Elbow Method")
+#k = 6
+
+kmeans1.out <- kmeans(pitchersnewagent_scaled, centers = 5, nstart = 1000)
+print(kmeans1.out)
+
+#visualize the clustering algorithm
+kmeans1.clusters <- kmeans1.out$cluster
+rownames(pitchersnewagent_scaled) <- paste(pitchersnewagent_person_POS, 1:dim(pitchersnewagent)[1], sep = "_")
+fviz_cluster(list(data=pitchersnewagent_scaled, cluster=kmeans1.clusters))
+
+
+
+
+
+
+
+
+
 
 
 
